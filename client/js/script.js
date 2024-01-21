@@ -30,7 +30,7 @@ const handleLogin = (e) => {
   login.style.display = 'none';
   chat.style.display = 'flex';
 
-  ws = new WebSocket('ws://192.168.1.12:8080');
+  ws = new WebSocket('wss://chatrealtime-c5e7.onrender.com');
 
   ws.onopen = () => {
     // Envia uma mensagem quando a conexão WebSocket é aberta

@@ -30,32 +30,61 @@ const handleLogin = (e) => {
   login.style.display = 'none';
   chat.style.display = 'flex';
 
-  ws = new WebSocket('ws://192.168.1.12:8080');
+  ws = new WebSocket('ws://localhost:8080');
+
+  const message = {
+    userId: user.id,
+    userName: user.name,
+    userColor: user.color,
+    type: 'login'
+  }
+
 
   ws.onopen = () => {
-    // Envia uma mensagem quando a conexão WebSocket é aberta
-    ws.send({msg:`Usuario: ${user.name} entrou no chat!`});
+
+    ws.send(JSON.stringify(message));
   };
 
-  ws.onmessage = processMessage;
+  ws.onmessage = (event) => {
+
+    const data = JSON.parse(event.data)
+
+    if (data.type === 'login' && data.userId !== user.id) {
+
+      renderNewUser(data.userName)
+
+    } else if (data.type === 'message') {
+
+
+      console.log()
+      processMessage(event);
+    }
+  }
+
+
 };
 
 
 const processMessage = ({ data }) => {
   const { userId, userName, userColor, content } = JSON.parse(data)
 
-  if(userId == user.id){
+  if (userId == user.id) {
 
     const selfMsg = createSelfMessage(content)
     chatMessages.appendChild(selfMsg)
-  }else{
+  } else {
 
-    const alsoMsg = createAlsoMessage(userName,content,userColor)
+    const alsoMsg = createAlsoMessage(userName, content, userColor)
     chatMessages.appendChild(alsoMsg)
   }
   // const element = createAlsoMessage(userName, content)
 
 }
+
+// const processLogin = ({ data }) => {
+//   let p = document.createElement('p').classList.add('login-message')
+//   p.innerText = 
+// }
 
 
 const getRandomColor = () => {
@@ -71,6 +100,26 @@ const getRandomColor = () => {
 }
 
 
+function getHours() {
+  const now = new Date();
+
+  const hrs = now.getHours().toString().padStart(2, '0');
+  const min = now.getMinutes().toString().padStart(2, '0');
+
+
+  return `${hrs}:${min}`;
+
+}
+
+
+const renderNewUser = (userName) => {
+  const p = document.createElement('p');
+  p.classList.add('user-on')
+  p.innerHTML = userName + ' entrou no chat'
+  chatMessages.appendChild(p)
+
+}
+
 const sendMenssage = e => {
   e.preventDefault()
 
@@ -78,12 +127,14 @@ const sendMenssage = e => {
     userId: user.id,
     userName: user.name,
     userColor: user.color,
-    content: chatInput.value
+    content: chatInput.value,
+    hour: getHours(),
+    type: 'message'
   }
 
   ws.send(JSON.stringify(message))
   console.log(message)
- 
+
   chatInput.value = ''
 
 }
@@ -100,7 +151,7 @@ const createSelfMessage = (content) => {
   return divSelfMessge;
 }
 
-const createAlsoMessage = (userName, content,userColor) => {
+const createAlsoMessage = (userName, content, userColor) => {
   // Criação do elemento <div> para mensagens de outros usuários
   const divOtherMessage = document.createElement('div');
   divOtherMessage.classList.add('message--other');
@@ -119,16 +170,16 @@ const createAlsoMessage = (userName, content,userColor) => {
   scroll()
   // Adicionando o <div> ao body (ou a outro elemento desejado)
   return divOtherMessage;
-  
+
 }
-const scroll = () =>{
+const scroll = () => {
   window.scrollTo({
     top: document.body.scrollHeight,
     behavior: 'smooth'
   });
 }
 
-const quitChat = () =>{
+const quitChat = () => {
   location.reload()
 }
 
@@ -138,4 +189,4 @@ const quitChat = () =>{
 
 loginForm.addEventListener('submit', handleLogin)
 chatForm.addEventListener('submit', sendMenssage)
-chatQuit.addEventListener('click',quitChat)
+chatQuit.addEventListener('click', quitChat)
